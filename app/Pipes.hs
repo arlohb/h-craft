@@ -8,3 +8,14 @@ infixl 9 |>
 infixl 9 ||>
 (||>) xs f = fmap f xs
 
+(!?) :: [a] -> Int -> Maybe a
+infixl 9 !?
+xs !? n
+    | n < 0     = Nothing
+    | otherwise =
+        foldr (\x r k -> case k of
+            0 -> Just x
+            _ -> r (k - 1))
+            (const Nothing) xs n
+
+
