@@ -3,6 +3,7 @@ module Mesh where
 import Pipes
 import Raylib.Core.Models
 import Raylib.Util
+import Raylib.Util.Math
 import Raylib.Types
 import Data.Functor ((<&>))
 import Data.Word (Word16)
@@ -38,6 +39,13 @@ facesInChunk chunk =
     , let block' = getBlockInDir x y z dir chunk
     , let faceBlock = getFaceBlock block block'
     , isJust faceBlock]
+
+buildChunk :: Chunk -> Mesh
+buildChunk chunk = chunk
+    |> facesInChunk
+    ||> buildFace
+    |> mergePartialMesh
+    |> finishPartialMesh
 
 faceVerts :: Direction -> [Vector3]
 faceVerts Px = [
@@ -87,6 +95,46 @@ faceNormal Nz = Vector3 0 0 (-1)
 
 faceTris :: [Word16]
 faceTris = [0,1,2,0,2,3]
+
+data PartialMesh = PartialMesh {
+    pmesh'vertices :: [Vector3],
+    pmesh'normals :: [Vector3],
+    pmesh'indicies :: [Word16]
+}
+
+buildFace :: Face -> PartialMesh
+buildFace Face {
+    face'pos = pos,
+    face'dir = dir,
+    face'block = _
+} = PartialMesh {
+    pmesh'vertices = faceVerts dir <&> (pos |+|),
+    pmesh'normals = replicate 4 $ faceNormal dir,
+    pmesh'indicies = faceTris
+}
+
+mergePartialMesh :: [PartialMesh] -> PartialMesh
+mergePartialMesh xs = PartialMesh {
+    pmesh'vertices = concatMap pmesh'vertices xs,
+    pmesh'normals = concatMap pmesh'normals xs,
+    pmesh'indicies = concatMap
+        (\(pmesh,i) -> pmesh'indicies pmesh <&> (+ (i * 4)))
+        $ zip xs [0..]
+}
+
+finishPartialMesh :: PartialMesh -> Mesh
+finishPartialMesh PartialMesh {
+    pmesh'vertices = vs,
+    pmesh'normals = ns,
+    pmesh'indicies = is
+} = emptyMesh {
+    mesh'vertexCount = length vs,
+    mesh'triangleCount = length is `div` 3,
+    mesh'vertices = vs,
+    mesh'texcoords = replicate (length vs) (Vector2 0 0),
+    mesh'normals = ns,
+    mesh'indices = Just is
+}
 
 emptyMesh :: Mesh
 emptyMesh = Mesh {
