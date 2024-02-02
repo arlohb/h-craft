@@ -1,5 +1,4 @@
 module Dir where
-import Raylib.Types (Vector3(..))
 
 data Direction = Px | Py | Pz | Nx | Ny | Nz
 all :: [Direction]
