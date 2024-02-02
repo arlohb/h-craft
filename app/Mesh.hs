@@ -1,6 +1,5 @@
 module Mesh where
 
-import Pipes
 import Raylib.Core.Models
 import Raylib.Util
 import Raylib.Util.Math
@@ -8,9 +7,12 @@ import Raylib.Types
 import Data.Functor ((<&>))
 import Data.Word (Word16)
 import Data.Maybe (isJust, fromJust)
+
+import Pipes
 import qualified Dir
 import Dir (Direction(..))
-import World
+import Block (Block(..))
+import Chunk
 
 data Face = Face {
     face'pos :: !Vector3,

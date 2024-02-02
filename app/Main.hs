@@ -1,5 +1,4 @@
 module Main where
-import Pipes
 import Raylib.Core
 import Raylib.Core.Text
 import Raylib.Core.Models
@@ -8,10 +7,13 @@ import Raylib.Util
 import Raylib.Util.Colors
 import Raylib.Types
 import Data.Functor ((<&>))
-import qualified Mesh
-import World (Chunk, genChunk)
-import Mesh (buildChunk)
 import System.CPUTime (getCPUTime)
+import qualified Data.Map as Map
+
+import Pipes
+import qualified Mesh
+import World (World)
+import qualified World
 
 timeIO :: IO a -> IO a
 timeIO fx = do
@@ -26,9 +28,7 @@ data State = State {
     frame :: !Int,
     time :: !Float,
     camera :: !Camera3D,
-    model :: !Model,
-    chunk :: !Chunk,
-    chunkModel :: !Model
+    world :: !World
 }
 
 cubeModel :: WindowResources -> IO Model
@@ -44,28 +44,36 @@ update state = do
     time <- getFrameTime <&> (+ time state)
     return state { frame = frame state + 1, time, camera }
 
+uploadShaderTime :: WindowResources -> Float -> Shader -> IO ()
+uploadShaderTime w time shader = setShaderValue shader "time" (ShaderUniformFloat time) w
+
 upload :: WindowResources -> State -> IO ()
 upload w State {
     time,
-    model
-} = model
-    |> model'materials
-    |> mapM (\mat ->
-        setShaderValue (mat |> material'shader) "time" (ShaderUniformFloat time) w
-    ) >> return ()
+    world
+} = world
+    |> Map.elems
+    ||> snd
+    ||> model'materials
+    ||> (\mats -> mats
+        ||> (uploadShaderTime w time . material'shader)
+        |> sequence_)
+    |> sequence_
 
 draw :: State -> IO ()
 draw State {
     frame,
     camera,
-    model,
-    chunkModel
+    world
 } = drawing $ do
     clearBackground black
 
-    mode3D camera $ do
-        drawModel model (Vector3 0 0 0) 1 white
-        drawModel chunkModel (Vector3 0 0 0) 1 white
+    world
+        |> Map.elems
+        ||> snd
+        ||> (\model -> drawModel model (Vector3 0 0 0) 1 white)
+        |> sequence_
+        |> mode3D camera
 
     drawFPS 10 10
     drawText (show frame) 30 40 18 lightGray
@@ -83,11 +91,15 @@ path = ("assets/" ++)
 initialState :: WindowResources -> IO State
 initialState w = do
     shader <- loadShader (Just $ path "vert.glsl") (Just $ path "frag.glsl") w
-    model <- cubeModel w >>= \model -> return $ setMaterialShader model 0 shader
-    let chunk = genChunk
-    chunkModel <- timeIO $ uploadMesh (buildChunk chunk) False w
-        >>= (`loadModelFromMesh` w)
-        >>= \chunkModel -> return $ setMaterialShader chunkModel 0 shader
+
+    world <-
+        [ (x,z)
+        | x <- [-1..1]
+        , z <- [-1..1] ]
+        |> foldr
+            (\(x,z) worldIO -> worldIO >>= \world -> timeIO $ World.addChunk w shader x z world)
+            (return Map.empty)
+
     return State {
         frame = 0,
         time = 0,
@@ -97,9 +109,7 @@ initialState w = do
             (Vector3 0 1 0)
             70
             CameraPerspective,
-        model,
-        chunk,
-        chunkModel
+        world
     }
 
 main :: IO ()

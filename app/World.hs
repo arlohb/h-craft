@@ -1,38 +1,38 @@
 module World where
-import qualified Dir
-import Dir (Direction)
-import Data.Functor ((<&>))
-import Data.Maybe (fromMaybe)
-import Data.Vector (Vector)
-import qualified Data.Vector as V
 
-data Block = Air | Dirt | Stone
-type Chunk = Vector (Vector (Vector Block))
+import Raylib.Types
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Raylib.Util
+import Raylib.Core.Models
+import Raylib.Util.Math
 
-genBlock :: Int -> Int -> Int -> Block
-genBlock x y z
-    | y < x + z  = Stone
-    | y == x + z = Dirt
-    | otherwise  = Air
+import Pipes
+import Mesh (buildChunk)
+import Chunk (Chunk)
+import qualified Chunk
 
-genChunk :: Chunk
-genChunk =
-    V.fromList [0..15]  <&> \x ->
-    V.fromList [0..255] <&> \y ->
-    V.fromList [0..15]  <&> \z ->
-        genBlock x y z
+type World = Map (Int,Int) (Chunk, Model)
 
-getBlockSafe :: Int -> Int -> Int -> Chunk -> Maybe Block
-getBlockSafe x y z chunk = chunk V.!? x >>= (V.!? y) >>= (V.!? z)
+setModelPos :: Vector3 -> Model -> Model
+setModelPos Vector3 {
+    vector3'x = x,
+    vector3'y = y,
+    vector3'z = z
+} model = model { model'transform = matrixTranslate x y z }
 
-getBlockOrDefault :: Int -> Int -> Int -> Block -> Chunk -> Block
-getBlockOrDefault x y z d chunk = fromMaybe d $ getBlockSafe x y z chunk
+createModel :: WindowResources -> Shader -> Chunk -> IO Model
+createModel w shader chunk = do
+    mesh <- buildChunk chunk
+        |> \m -> uploadMesh m False w
+    model <- loadModelFromMesh mesh w
+    return $ model
+        |> \m -> setMaterialShader m 0 shader
+        |> setModelPos (Chunk.posOffset chunk)
 
-getBlock :: Int -> Int -> Int -> Chunk -> Block
-getBlock x y z = getBlockOrDefault x y z Air
-
-getBlockInDir :: Int -> Int -> Int -> Direction -> Chunk -> Block
-getBlockInDir x y z dir = let
-    (x',y',z') = Dir.offset (x,y,z) dir
-    in getBlock x' y' z'
+addChunk :: WindowResources -> Shader -> Int -> Int -> World -> IO World
+addChunk w shader x z world = do
+    let chunk = Chunk.gen x z
+    model <- createModel w shader chunk
+    return $ Map.insert (x,z) (chunk,model) world
 

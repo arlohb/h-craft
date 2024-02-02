@@ -58,7 +58,7 @@ executable h-craft
     -- Import common warning flags.
     import:           warnings
 
-    other-modules:    Pipes World Dir Mesh
+    other-modules:    Pipes Block Chunk World Dir Mesh
 
     -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
