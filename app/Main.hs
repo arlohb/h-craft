@@ -65,7 +65,7 @@ draw State {
     clearBackground black
 
     mode3D camera $ do
-        rlDisableBackfaceCulling
+        -- rlDisableBackfaceCulling
         drawModel model (Vector3 0 0 0) 1 white
         drawModel chunkModel (Vector3 0 0 0) 1 white
 

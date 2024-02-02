@@ -12,3 +12,11 @@ offset (x,y,z) Nx = (x-1,y,z)
 offset (x,y,z) Ny = (x,y-1,z)
 offset (x,y,z) Nz = (x,y,z-1)
 
+flip :: Direction -> Direction
+flip Px = Nx
+flip Py = Ny
+flip Pz = Nz
+flip Nx = Px
+flip Ny = Py
+flip Nz = Pz
+

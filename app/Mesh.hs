@@ -18,18 +18,18 @@ data Face = Face {
     face'block :: !Block
 }
 
-getFaceBlock :: Block -> Block -> Maybe Block
+getFaceBlock :: Block -> Block -> Maybe (Block, Bool)
 getFaceBlock Air   Air   = Nothing
-getFaceBlock Air   block = Just block
-getFaceBlock block Air   = Just block
+getFaceBlock Air   block = Just (block, False)
+getFaceBlock block Air   = Just (block, True)
 getFaceBlock _     _     = Nothing
 
 facesInChunk :: Chunk -> [Face]
 facesInChunk chunk =
     [ Face {
         face'pos = Vector3 (fromIntegral x) (fromIntegral y) (fromIntegral z),
-        face'dir = dir,
-        face'block = fromJust faceBlock
+        face'dir = if flipDir then Dir.flip dir else dir,
+        face'block
     }
     | x <- [0..15]
     , y <- [0..255]
@@ -38,6 +38,7 @@ facesInChunk chunk =
     , dir <- [Px, Py, Pz]
     , let block' = getBlockInDir x y z dir chunk
     , let faceBlock = getFaceBlock block block'
+    , let (face'block, flipDir) = fromJust faceBlock
     , isJust faceBlock]
 
 buildChunk :: Chunk -> Mesh
@@ -94,7 +95,7 @@ faceNormal Ny = Vector3 0 (-1) 0
 faceNormal Nz = Vector3 0 0 (-1)
 
 faceTris :: [Word16]
-faceTris = [0,1,2,0,2,3]
+faceTris = [2,1,0,3,2,0]
 
 data PartialMesh = PartialMesh {
     pmesh'vertices :: ![Vector3],
