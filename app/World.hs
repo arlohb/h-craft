@@ -2,11 +2,12 @@ module World where
 import qualified Dir
 import Dir (Direction)
 import Data.Functor ((<&>))
-import Pipes
 import Data.Maybe (fromMaybe)
+import Data.Vector (Vector)
+import qualified Data.Vector as V
 
 data Block = Air | Dirt | Stone
-type Chunk = [[[Block]]]
+type Chunk = Vector (Vector (Vector Block))
 
 genBlock :: Int -> Int -> Int -> Block
 genBlock x y z
@@ -16,13 +17,13 @@ genBlock x y z
 
 genChunk :: Chunk
 genChunk =
-    [0..15] <&> \x ->
-    [0..255] <&> \y ->
-    [0..15] <&> \z ->
+    V.fromList [0..15]  <&> \x ->
+    V.fromList [0..255] <&> \y ->
+    V.fromList [0..15]  <&> \z ->
         genBlock x y z
 
 getBlockSafe :: Int -> Int -> Int -> Chunk -> Maybe Block
-getBlockSafe x y z chunk = chunk !? x >>= (!? y) >>= (!? z)
+getBlockSafe x y z chunk = chunk V.!? x >>= (V.!? y) >>= (V.!? z)
 
 getBlockOrDefault :: Int -> Int -> Int -> Block -> Chunk -> Block
 getBlockOrDefault x y z d chunk = fromMaybe d $ getBlockSafe x y z chunk

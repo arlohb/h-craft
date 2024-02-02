@@ -73,6 +73,7 @@ executable h-craft
     build-depends:    base ^>=4.17.2.1,
                       containers,
                       h-raylib ^>=5.1.0.1,
+                      vector,
 
     -- Directories containing source files.
     hs-source-dirs:   app
