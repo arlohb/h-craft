@@ -12,6 +12,7 @@ uniform float time;
 void main() {
     float a = abs(sin(time));
     // col = vec4(a, a, a, 1.0);
-    col = vec4(fragNormal, 1.0);
+    // col = vec4(fragNormal, 1.0);
+    col = vec4(fragPosition / 10.0, 1.0);
 }
 
