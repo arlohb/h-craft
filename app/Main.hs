@@ -37,7 +37,11 @@ cubeModel w = Mesh.cubeMesh w >>= (`loadModelFromMesh` w)
 
 update :: State -> IO State
 update state = do
-    camera <- updateCamera (camera state) CameraModeFree
+    btn_r <- isMouseButtonDown MouseButtonRight
+    camera <- if btn_r
+        then updateCamera (camera state) CameraModeFree
+        else return $ camera state
+
     time <- getFrameTime <&> (+ time state)
     return state { frame = frame state + 1, time, camera }
 
