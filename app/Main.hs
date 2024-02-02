@@ -11,7 +11,6 @@ import Data.Functor ((<&>))
 import qualified Mesh
 import World (Chunk, genChunk)
 import Mesh (buildChunk)
-import Raylib.Util.RLGL (rlDisableBackfaceCulling)
 import System.CPUTime (getCPUTime)
 
 timeIO :: IO a -> IO a
@@ -65,7 +64,6 @@ draw State {
     clearBackground black
 
     mode3D camera $ do
-        -- rlDisableBackfaceCulling
         drawModel model (Vector3 0 0 0) 1 white
         drawModel chunkModel (Vector3 0 0 0) 1 white
 
