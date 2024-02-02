@@ -97,9 +97,9 @@ faceTris :: [Word16]
 faceTris = [0,1,2,0,2,3]
 
 data PartialMesh = PartialMesh {
-    pmesh'vertices :: [Vector3],
-    pmesh'normals :: [Vector3],
-    pmesh'indicies :: [Word16]
+    pmesh'vertices :: ![Vector3],
+    pmesh'normals :: ![Vector3],
+    pmesh'indicies :: ![Word16]
 }
 
 buildFace :: Face -> PartialMesh
